@@ -1,5 +1,7 @@
 import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
+import { errorResponse, successResponse } from "../utils/ApiRequestResponse.js";
+import { StatusCodes } from "http-status-codes";
 
 export const signup = async (req, res) => {
   try {
@@ -13,14 +15,20 @@ export const signup = async (req, res) => {
       email === "" ||
       password === ""
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return errorResponse(
+        res,
+        "All fields are required",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists" });
+      return errorResponse(
+        res,
+        "User with this email already exists",
+        StatusCodes.BAD_REQUEST
+      );
     }
 
     const hashedPassword = bcryptjs.hashSync(password, 10);
@@ -30,11 +38,16 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
     if (!user) {
-      return res.status(400).json({ message: "User not created" });
+      return errorResponse(res, "User not created", StatusCodes.BAD_REQUEST);
     }
     const { password: pass, ...rest } = user._doc;
-    res.status(201).json({ message: "User created successfully", user: rest });
+    return successResponse(
+      res,
+      "User created successfully",
+      StatusCodes.CREATED,
+      rest
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(res, error.message, StatusCodes.INTERNAL_SERVER_ERROR);
   }
 };

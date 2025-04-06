@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import "./App.css";
+import FooterCom from "./components/Footer";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/sign-up" element={<SignUp />} />
         </Routes>
       </main>
+      <FooterCom />
     </BrowserRouter>
   );
 }
