@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { errorResponse, successResponse } from "../utils/ApiRequestResponse.js";
 import { StatusCodes } from "http-status-codes";
-
+import jwt from "jsonwebtoken";
 export const signup = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -47,6 +47,51 @@ export const signup = async (req, res) => {
       StatusCodes.CREATED,
       rest
     );
+  } catch (error) {
+    return errorResponse(res, error.message, StatusCodes.INTERNAL_SERVER_ERROR);
+  }
+};
+
+export const signin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return errorResponse(
+        res,
+        "All fields are required",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return errorResponse(
+        res,
+        "Invalid email or password",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    const isMatch = bcryptjs.compareSync(password, user.password);
+    if (!isMatch) {
+      return errorResponse(
+        res,
+        "Invalid email or password",
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d", // Optional: token expiration
+    });
+
+    const { password: pass, ...userWithoutPassword } = user._doc;
+
+    return successResponse(res, "User signed in successfully", StatusCodes.OK, {
+      ...userWithoutPassword,
+      token,
+    });
   } catch (error) {
     return errorResponse(res, error.message, StatusCodes.INTERNAL_SERVER_ERROR);
   }
